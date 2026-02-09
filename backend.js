@@ -21,7 +21,7 @@ app.post("/api/chat", async (req, res) => {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.APIKEY}`,
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -32,6 +32,27 @@ app.post("/api/chat", async (req, res) => {
         ]
       })
     });
+
+    const data = await response.json();
+
+    // 🔐 Handle OpenAI errors cleanly
+    if (data.error) {
+      console.error("OpenAI error:", data.error);
+      return res.json({ reply: "⚠️ OpenAI error: " + data.error.message });
+    }
+
+    const reply =
+      data.choices?.[0]?.message?.content ??
+      "⚠️ No response from model.";
+
+    res.json({ reply });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ reply: "Server error" });
+  }
+});
+
 
     const data = await response.json();
 

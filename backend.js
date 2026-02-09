@@ -6,22 +6,24 @@ import "dotenv/config";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // serves index.html
+app.use(express.static("public"));
 
+// Chat endpoint
 app.post("/api/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
 
     if (!userMessage) {
-      return res.status(400).json({ error: "No message provided" });
+      return res.status(400).json({ reply: "No message provided" });
     }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${process.env.APIKEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -35,12 +37,18 @@ app.post("/api/chat", async (req, res) => {
 
     const data = await response.json();
 
-    // 🔐 Handle OpenAI errors cleanly
+    // 🔍 Log OpenAI response (very useful on Render)
+    console.log("OpenAI response:", JSON.stringify(data, null, 2));
+
+    // ❌ Handle OpenAI-side errors
     if (data.error) {
-      console.error("OpenAI error:", data.error);
-      return res.json({ reply: "⚠️ OpenAI error: " + data.error.message });
+      console.error("OpenAI API error:", data.error);
+      return res.json({
+        reply: "⚠️ OpenAI error: " + data.error.message
+      });
     }
 
+    // ✅ Safely extract model reply
     const reply =
       data.choices?.[0]?.message?.content ??
       "⚠️ No response from model.";
@@ -48,24 +56,14 @@ app.post("/api/chat", async (req, res) => {
     res.json({ reply });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ reply: "Server error" });
-  }
-});
-
-
-    const data = await response.json();
-
-    res.json({
-      reply: data.choices[0].message.content
+    console.error("Server error:", err);
+    res.status(500).json({
+      reply: "⚠️ Internal server error"
     });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
   }
 });
 
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

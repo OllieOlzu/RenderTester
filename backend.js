@@ -11,12 +11,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// Serve static frontend
 app.use(express.static(path.join(__dirname, "public")));
 
 // Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.APIKEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Chat endpoint
 app.post("/chat", async (req, res) => {
@@ -24,23 +22,26 @@ app.post("/chat", async (req, res) => {
     const { message } = req.body;
     if (!message) return res.status(400).json({ error: "Message is required" });
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-chat", // ─ correct chat model
+    });
 
-    const result = await model.generateMessage({ input: message });
+    const result = await model.generateMessage({
+      input: message,
+    });
 
-    const reply = result.output?.[0]?.content?.[0]?.text || "No response";
+    const reply = result.output?.[0]?.content?.[0]?.text || "";
 
     res.json({ reply });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(500).json({ error: err.message || "Server error" });
   }
 });
 
-// Catch-all to serve index.html for any unknown routes
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));

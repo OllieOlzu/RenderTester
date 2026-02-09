@@ -4,15 +4,27 @@
   <meta charset="UTF-8" />
   <title>Gemini Chatbot</title>
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; }
-    #chat { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; margin-bottom: 10px; }
-    .user { color: blue; margin-bottom: 5px; }
-    .bot { color: green; margin-bottom: 5px; }
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+    }
+    #chat {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .user { color: blue; }
+    .bot { color: green; }
   </style>
 </head>
 <body>
   <h2>Gemini Chatbot</h2>
+
   <div id="chat"></div>
+
   <input id="input" placeholder="Type a message..." />
   <button onclick="sendMessage()">Send</button>
 
@@ -27,19 +39,15 @@
       chat.innerHTML += `<div class="user"><b>You:</b> ${message}</div>`;
       input.value = "";
 
-      try {
-        const res = await fetch("/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message })
-        });
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      });
 
-        const data = await res.json();
-        chat.innerHTML += `<div class="bot"><b>Gemini:</b> ${data.reply}</div>`;
-        chat.scrollTop = chat.scrollHeight;
-      } catch (err) {
-        chat.innerHTML += `<div class="bot" style="color:red"><b>Error:</b> ${err.message}</div>`;
-      }
+      const data = await res.json();
+      chat.innerHTML += `<div class="bot"><b>Gemini:</b> ${data.reply}</div>`;
+      chat.scrollTop = chat.scrollHeight;
     }
   </script>
 </body>

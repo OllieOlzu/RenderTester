@@ -13,24 +13,22 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Chat endpoint
 app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
     if (!message) return res.status(400).json({ error: "Message is required" });
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-chat", // ─ correct chat model
-    });
+    // Use generateContent — not generateMessage
+    const result = await genAI
+      .getGenerativeModel({ model: "gemini-1.5-flash" })  // choose an available model
+      .generateContent({
+        contents: message
+      });
 
-    const result = await model.generateMessage({
-      input: message,
-    });
-
-    const reply = result.output?.[0]?.content?.[0]?.text || "";
+    // The SDK returns .response.text()
+    const reply = result.response?.text || "";
 
     res.json({ reply });
   } catch (err) {

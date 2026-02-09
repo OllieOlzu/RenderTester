@@ -10,7 +10,7 @@ app.use(express.static("public"));
 
 // Initialize the Groq SDK client
 const client = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: process.env.APIKEY,
 });
 
 // Chat endpoint

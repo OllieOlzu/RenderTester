@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chatbot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .chatbox {
+      width: 400px;
+      background: #1e1e1e;
+      border-radius: 10px;
+      padding: 15px;
+    }
+    .messages {
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .message {
+      margin: 5px 0;
+    }
+    .user {
+      color: #4fc3f7;
+    }
+    .bot {
+      color: #81c784;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="chatbox">
+  <div class="messages" id="messages"></div>
+  <input id="input" placeholder="Type a message..." />
+</div>
+
+<script>
+  const input = document.getElementById("input");
+  const messages = document.getElementById("messages");
+
+  function addMessage(text, cls) {
+    const div = document.createElement("div");
+    div.className = "message " + cls;
+    div.textContent = text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  input.addEventListener("keydown", async (e) => {
+    if (e.key === "Enter" && input.value.trim()) {
+      const text = input.value;
+      input.value = "";
+
+      addMessage("You: " + text, "user");
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text })
+      });
+
+      const data = await res.json();
+      addMessage("Bot: " + data.reply, "bot");
+    }
+  });
+</script>
+
+</body>
+</html>

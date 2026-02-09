@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Groq Chatbot</title>
+  <style>
+    body { font-family: Arial; max-width: 600px; margin: 50px auto; }
+    #chat { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; }
+    .message { margin: 5px 0; }
+    .user { color: blue; }
+    .bot { color: green; }
+    input { width: 80%; padding: 5px; }
+    button { padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h1>Groq Chatbot</h1>
+  <div id="chat"></div>
+  <input id="message" placeholder="Type a message" />
+  <button onclick="sendMessage()">Send</button>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById('message');
+      const text = `You are a language tester bot designed to test how good the user is at speaking ${input.value.trim()}. Each time, you will say some text in that language and then say 4 options on what it means. Answer in this EXACT same format with each ; seperating each option to asnwer: "No era amor;Goodbye;Good morning;No thank you;It wasn't love" and the correct asnwer is at the end. Do not say anything else, just a unique asnwer each time. The user will respond with "Next", where you ask the next question.`;
+      if (!text) return;
+
+      addMessage('user', text);
+      input.value = '';
+
+      try {
+        const res = await fetch('/api/chat', {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text })});
+
+        const data = await res.json();
+        addMessage('bot', data.reply);
+      } catch (err) {
+        addMessage('bot', 'Error: ' + err.message);
+      }
+    }
+
+    function addMessage(sender, text) {
+      const chat = document.getElementById('chat');
+      const div = document.createElement('div');
+      div.className = 'message ' + sender;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+  </script>
+</body>
+</html>

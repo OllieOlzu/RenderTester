@@ -19,7 +19,7 @@ app.post("/search", async (req, res) => {
     const response = await fetch("https://ollama.com/api/web_search", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OLLAMA_API_KEY}`,
+        "Authorization": `Bearer ${process.env.APIKEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({ query })

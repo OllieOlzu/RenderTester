@@ -1,15 +1,15 @@
 {
-  "name": "chatbot-backend",
+  "name": "ollama-web-searcher",
   "version": "1.0.0",
-  "type": "module",
+  "description": "Simple web search GUI using Ollama Web Search API",
   "main": "backend.js",
   "scripts": {
     "start": "node backend.js"
   },
   "dependencies": {
+    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "dotenv": "^16.3.1",
     "node-fetch": "^3.3.2"
   }
 }

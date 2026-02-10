@@ -6,64 +6,31 @@ import "dotenv/config";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static("public")); // serve index.html from /public
 
-// Chat endpoint
-app.post("/api/chat", async (req, res) => {
+// Web search endpoint
+app.post("/search", async (req, res) => {
+  const query = req.body.query;
+  if (!query) return res.status(400).json({ error: "Query required" });
+
   try {
-    const userMessage = req.body.message;
-
-    if (!userMessage) {
-      return res.status(400).json({ reply: "No message provided" });
-    }
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://ollama.com/api/web_search", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.APIKEY}`,
+        "Authorization": `Bearer ${process.env.OLLAMA_API_KEY}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: "You are a helpful chatbot." },
-          { role: "user", content: userMessage }
-        ]
-      })
+      body: JSON.stringify({ query })
     });
 
     const data = await response.json();
-
-    // 🔍 Log OpenAI response (very useful on Render)
-    console.log("OpenAI response:", JSON.stringify(data, null, 2));
-
-    // ❌ Handle OpenAI-side errors
-    if (data.error) {
-      console.error("OpenAI API error:", data.error);
-      return res.json({
-        reply: "⚠️ OpenAI error: " + data.error.message
-      });
-    }
-
-    // ✅ Safely extract model reply
-    const reply =
-      data.choices?.[0]?.message?.content ??
-      "⚠️ No response from model.";
-
-    res.json({ reply });
-
+    res.json(data);
   } catch (err) {
-    console.error("Server error:", err);
-    res.status(500).json({
-      reply: "⚠️ Internal server error"
-    });
+    console.error(err);
+    res.status(500).json({ error: "Error fetching search results" });
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

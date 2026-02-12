@@ -1,36 +1,50 @@
 import express from "express";
 import cors from "cors";
-import fetch from "node-fetch";
-import "dotenv/config";
+import { GoogleSearch } from "serpapi";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // serve index.html from /public
+app.use(express.static("public"));
 
-// Web search endpoint
-app.post("/search", async (req, res) => {
-  const query = req.body.query;
-  if (!query) return res.status(400).json({ error: "Query required" });
+app.get("/api/news", async (req, res) => {
+  const symbol = req.query.symbol;
+
+  if (!symbol) {
+    return res.status(400).json({ error: "Missing stock symbol" });
+  }
 
   try {
-    const response = await fetch("https://ollama.com/api/web_search", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.APIKEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ query })
+    const search = new GoogleSearch({
+      engine: "google_news",
+      q: `latest ${symbol} stock news`,
+      api_key: process.env.SERPAPI_KEY
     });
 
-    const data = await response.json();
-    res.json(data);
+    const results = await search.get_dict();
+
+    const articles = (results.news_results || [])
+      .slice(0, 3)
+      .map(article => ({
+        title: article.title,
+        source: article.source,
+        link: article.link,
+        date: article.date
+      }));
+
+    res.json({
+      symbol,
+      articles
+    });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Error fetching search results" });
+    res.status(500).json({ error: "Failed to fetch news" });
   }
 });
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

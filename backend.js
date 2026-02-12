@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { GoogleSearch } from "serpapi";
+import SerpApi from "serpapi";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,27 +17,27 @@ app.get("/api/news", async (req, res) => {
   }
 
   try {
-    const search = new GoogleSearch({
+    const client = new SerpApi.GoogleSearch(process.env.SERPAPI_KEY);
+
+    const params = {
       engine: "google_news",
       q: `latest ${symbol} stock news`,
-      api_key: process.env.APIKEY
-    });
+      hl: "en",
+      gl: "us"
+    };
 
-    const results = await search.get_dict();
+    const results = await client.getJson(params);
 
     const articles = (results.news_results || [])
       .slice(0, 3)
-      .map(article => ({
-        title: article.title,
-        source: article.source,
-        link: article.link,
-        date: article.date
+      .map(a => ({
+        title: a.title,
+        source: a.source,
+        link: a.link,
+        date: a.date
       }));
 
-    res.json({
-      symbol,
-      articles
-    });
+    res.json({ symbol, articles });
 
   } catch (err) {
     console.error(err);
@@ -46,5 +46,5 @@ app.get("/api/news", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });

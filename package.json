@@ -1,15 +1,13 @@
 {
-  "name": "ollama-web-searcher",
+  "name": "stock-news-search",
   "version": "1.0.0",
-  "description": "Simple web search GUI using Ollama Web Search API",
-  "main": "backend.js",
+  "type": "module",
   "scripts": {
     "start": "node backend.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "express": "^4.19.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "node-fetch": "^3.3.2"
+    "serpapi": "^1.1.1"
   }
 }

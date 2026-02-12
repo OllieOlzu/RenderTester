@@ -2,53 +2,64 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ollama Web Searcher</title>
+  <title>Stock News Search</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
-    input[type=text] { width: 60%; padding: 10px; }
-    button { padding: 10px 20px; }
-    .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
-    .result a { text-decoration: none; color: blue; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+    }
+    input, button {
+      padding: 8px;
+      font-size: 16px;
+    }
+    .article {
+      margin-top: 15px;
+      padding: 10px;
+      border-left: 4px solid #0077ff;
+    }
+    a {
+      text-decoration: none;
+      color: #0077ff;
+    }
   </style>
 </head>
 <body>
-  <h1>Ollama Web Searcher</h1>
-  <input type="text" id="query" placeholder="Type your search here..." />
-  <button onclick="search()">Search</button>
+
+  <h2>📈 Stock News Finder</h2>
+
+  <input id="symbol" placeholder="AAPL, MSFT, TSLA" />
+  <button onclick="getNews()">Search</button>
 
   <div id="results"></div>
 
   <script>
-    async function search() {
-      const query = document.getElementById("query").value.trim();
-      if (!query) return alert("Please enter a search query.");
+    async function getNews() {
+      const symbol = document.getElementById("symbol").value.trim();
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.innerHTML = "Loading...";
 
-      const res = await fetch("/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query })
-      });
-
+      const res = await fetch(`/api/news?symbol=${symbol}`);
       const data = await res.json();
-      const container = document.getElementById("results");
-      container.innerHTML = "";
 
-      if (!data.results || data.results.length === 0) {
-        container.innerHTML = "<p>No results found.</p>";
+      if (data.error) {
+        resultsDiv.innerHTML = data.error;
         return;
       }
 
-      data.results.forEach(r => {
-        const div = document.createElement("div");
-        div.className = "result";
-        div.innerHTML = `
-          <a href="${r.url}" target="_blank"><strong>${r.title}</strong></a>
-          <p>${r.content}</p>
+      resultsDiv.innerHTML = "";
+
+      data.articles.forEach(article => {
+        resultsDiv.innerHTML += `
+          <div class="article">
+            <strong>${article.title}</strong><br>
+            <small>${article.source} — ${article.date || "Recent"}</small><br>
+            <a href="${article.link}" target="_blank">Read article</a>
+          </div>
         `;
-        container.appendChild(div);
       });
     }
   </script>
+
 </body>
 </html>

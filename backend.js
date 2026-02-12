@@ -20,7 +20,7 @@ app.get("/api/news", async (req, res) => {
     const result = await getJson({
       engine: "google_news",
       q: `${stock} stock news`,
-      api_key: process.env.SERPAPI_KEY
+      api_key: process.env.APIKEY
     });
 
     const articles = (result.news_results || [])

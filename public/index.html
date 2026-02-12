@@ -1,94 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Stock News Finder</title>
+  <meta charset="UTF-8" />
+  <title>Stock News Sentiment</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: #0f172a;
       color: #e5e7eb;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      max-width: 800px;
+      margin: auto;
+      padding: 30px;
     }
-    .card {
-      background: #020617;
-      padding: 20px;
-      border-radius: 12px;
-      width: 420px;
-      box-shadow: 0 0 30px rgba(0,0,0,0.6);
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
     }
+
     input, button {
-      width: 100%;
       padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: none;
       font-size: 16px;
+      border-radius: 6px;
+      border: none;
     }
+
+    input {
+      width: 60%;
+    }
+
     button {
-      background: #2563eb;
-      color: white;
+      background: #38bdf8;
       cursor: pointer;
+      margin-left: 8px;
     }
+
     button:hover {
-      background: #1d4ed8;
+      background: #0ea5e9;
     }
-    .news {
+
+    .article {
+      background: #020617;
+      padding: 15px;
+      border-radius: 8px;
       margin-top: 15px;
     }
-    a {
-      color: #60a5fa;
+
+    .article a {
+      color: #38bdf8;
+      font-size: 18px;
       text-decoration: none;
+    }
+
+    .article small {
+      color: #9ca3af;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .summary {
+      background: #020617;
+      border-left: 4px solid #38bdf8;
+      padding: 15px;
+      margin-top: 25px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+    }
+
+    .loading {
+      margin-top: 20px;
+      color: #9ca3af;
     }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <h2>📈 Stock News</h2>
-  <input id="stock" placeholder="Enter stock symbol (AAPL)" />
-  <button onclick="getNews()">Get News</button>
+  <h1>📈 Stock News Sentiment</h1>
 
-  <div class="news" id="news"></div>
-</div>
+  <div style="text-align:center;">
+    <input id="stockInput" placeholder="Enter stock (e.g. AAPL)" />
+    <button onclick="fetchNews()">Analyze</button>
+  </div>
 
-<script>
-async function getNews() {
-  const stock = document.getElementById("stock").value.trim();
-  const newsDiv = document.getElementById("news");
+  <div id="content"></div>
 
-  if (!stock) {
-    newsDiv.innerHTML = "Please enter a stock symbol.";
-    return;
-  }
+  <script>
+    function timeAgo(dateStr) {
+      const date = new Date(dateStr);
+      const seconds = Math.floor((Date.now() - date) / 1000);
 
-  newsDiv.innerHTML = "Loading...";
+      const units = [
+        [60, "seconds"],
+        [60, "minutes"],
+        [24, "hours"],
+        [7, "days"],
+        [4.345, "weeks"],
+        [12, "months"],
+        [Infinity, "years"]
+      ];
 
-  try {
-    const res = await fetch(`/api/news?stock=${stock}`);
-    const data = await res.json();
-
-    if (!data.results || data.results.length === 0) {
-      newsDiv.innerHTML = "No news found.";
-      return;
+      let value = seconds;
+      for (const [limit, name] of units) {
+        if (value < limit) {
+          return `${Math.floor(value)} ${name} ago`;
+        }
+        value /= limit;
+      }
     }
 
-    newsDiv.innerHTML = data.results.map(n => `
-      <p>
-        <strong>${n.title}</strong><br>
-        <small>${n.source} — ${n.date}</small><br>
-        <a href="${n.link}" target="_blank">Read more</a>
-      </p>
-    `).join("");
+    async function fetchNews() {
+      const stock = document.getElementById("stockInput").value.trim().toUpperCase();
+      const content = document.getElementById("content");
+      content.innerHTML = "";
 
-  } catch {
-    newsDiv.innerHTML = "Error fetching news.";
-  }
-}
-</script>
+      if (!stock) return;
+
+      content.innerHTML = `<div class="loading">Fetching news...</div>`;
+
+      try {
+        const res = await fetch(`/api/news?stock=${stock}`);
+        const data = await res.json();
+
+        if (!data.results || data.results.length === 0) {
+          content.innerHTML = "No news found.";
+          return;
+        }
+
+        content.innerHTML = "";
+
+        let articleText = "";
+
+        data.results.forEach(article => {
+          articleText += `Title: ${article.title}\nSource: ${article.source}\n\n`;
+
+          content.innerHTML += `
+            <div class="article">
+              <a href="${article.link}" target="_blank">${article.title}</a>
+              <small>${article.source} • ${timeAgo(article.date)}</small>
+            </div>
+          `;
+        });
+
+        content.innerHTML += `<div class="loading">Analyzing sentiment with AI...</div>`;
+
+        const aiRes = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message:
+              `Based on the following stock news headlines, say whether the sentiment is Bullish, Bearish, or Mixed.
+               Then briefly explain why in 2–3 sentences.\n\n${articleText}`
+          })
+        });
+
+        const aiData = await aiRes.json();
+
+        content.innerHTML += `
+          <div class="summary">
+            <strong>AI Sentiment Analysis:</strong><br><br>
+            ${aiData.reply}
+          </div>
+        `;
+
+      } catch (err) {
+        content.innerHTML = "Error loading data.";
+        console.error(err);
+      }
+    }
+  </script>
 
 </body>
 </html>

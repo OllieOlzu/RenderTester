@@ -20,7 +20,7 @@ app.get("/api/news", async (req, res) => {
     const search = new GoogleSearch({
       engine: "google_news",
       q: `latest ${symbol} stock news`,
-      api_key: process.env.SERPAPI_KEY
+      api_key: process.env.APIKEY
     });
 
     const results = await search.get_dict();

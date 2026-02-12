@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import SerpApi from "serpapi";
+import { getJson } from "serpapi";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,25 +10,20 @@ app.use(express.json());
 app.use(express.static("public"));
 
 app.get("/api/news", async (req, res) => {
-  const symbol = req.query.symbol;
+  const stock = req.query.stock;
 
-  if (!symbol) {
+  if (!stock) {
     return res.status(400).json({ error: "Missing stock symbol" });
   }
 
   try {
-    const client = new SerpApi.GoogleSearch(process.env.SERPAPI_KEY);
-
-    const params = {
+    const result = await getJson({
       engine: "google_news",
-      q: `latest ${symbol} stock news`,
-      hl: "en",
-      gl: "us"
-    };
+      q: `${stock} stock news`,
+      api_key: process.env.SERPAPI_KEY
+    });
 
-    const results = await client.getJson(params);
-
-    const articles = (results.news_results || [])
+    const articles = (result.news_results || [])
       .slice(0, 3)
       .map(a => ({
         title: a.title,
@@ -37,7 +32,10 @@ app.get("/api/news", async (req, res) => {
         date: a.date
       }));
 
-    res.json({ symbol, articles });
+    res.json({
+      stock,
+      results: articles
+    });
 
   } catch (err) {
     console.error(err);
@@ -46,5 +44,5 @@ app.get("/api/news", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

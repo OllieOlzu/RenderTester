@@ -2,64 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Stock News Search</title>
+  <title>Stock News Finder</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 50px auto;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: #020617;
+      padding: 20px;
+      border-radius: 12px;
+      width: 420px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.6);
     }
     input, button {
-      padding: 8px;
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: none;
       font-size: 16px;
     }
-    .article {
+    button {
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .news {
       margin-top: 15px;
-      padding: 10px;
-      border-left: 4px solid #0077ff;
     }
     a {
+      color: #60a5fa;
       text-decoration: none;
-      color: #0077ff;
     }
   </style>
 </head>
 <body>
 
-  <h2>📈 Stock News Finder</h2>
+<div class="card">
+  <h2>📈 Stock News</h2>
+  <input id="stock" placeholder="Enter stock symbol (AAPL)" />
+  <button onclick="getNews()">Get News</button>
 
-  <input id="symbol" placeholder="AAPL, MSFT, TSLA" />
-  <button onclick="getNews()">Search</button>
+  <div class="news" id="news"></div>
+</div>
 
-  <div id="results"></div>
+<script>
+async function getNews() {
+  const stock = document.getElementById("stock").value.trim();
+  const newsDiv = document.getElementById("news");
 
-  <script>
-    async function getNews() {
-      const symbol = document.getElementById("symbol").value.trim();
-      const resultsDiv = document.getElementById("results");
-      resultsDiv.innerHTML = "Loading...";
+  if (!stock) {
+    newsDiv.innerHTML = "Please enter a stock symbol.";
+    return;
+  }
 
-      const res = await fetch(`/api/news?symbol=${symbol}`);
-      const data = await res.json();
+  newsDiv.innerHTML = "Loading...";
 
-      if (data.error) {
-        resultsDiv.innerHTML = data.error;
-        return;
-      }
+  try {
+    const res = await fetch(`/api/news?stock=${stock}`);
+    const data = await res.json();
 
-      resultsDiv.innerHTML = "";
-
-      data.articles.forEach(article => {
-        resultsDiv.innerHTML += `
-          <div class="article">
-            <strong>${article.title}</strong><br>
-            <small>${article.source} — ${article.date || "Recent"}</small><br>
-            <a href="${article.link}" target="_blank">Read article</a>
-          </div>
-        `;
-      });
+    if (!data.results || data.results.length === 0) {
+      newsDiv.innerHTML = "No news found.";
+      return;
     }
-  </script>
+
+    newsDiv.innerHTML = data.results.map(n => `
+      <p>
+        <strong>${n.title}</strong><br>
+        <small>${n.source} — ${n.date}</small><br>
+        <a href="${n.link}" target="_blank">Read more</a>
+      </p>
+    `).join("");
+
+  } catch {
+    newsDiv.innerHTML = "Error fetching news.";
+  }
+}
+</script>
 
 </body>
 </html>

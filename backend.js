@@ -11,6 +11,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
+const client = new Groq({
+  apiKey: process.env.GROQ_API_KEY
+});
+
+
 app.post("/api/chat", async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ reply: "No message provided" });

@@ -133,14 +133,17 @@
         let articleText = "";
 
         data.results.forEach(article => {
-          articleText += `Title: ${article.title}\nSource: ${article.source}\n\n`;
+          if (article.date != undefined) {
+              articleText += `Title: ${article.title}\nSource: ${article.source}\n\n`;
 
-          content.innerHTML += `
-            <div class="article">
-              <a href="${article.link}" target="_blank">${article.title}</a>
-              <small>${timeAgo(article.date)} {${article.date}}</small>
-            </div>
-          `;
+              content.innerHTML += `
+              <div class="article">
+                <a href="${article.link}" target="_blank">${article.title}</a>
+                <small>${timeAgo(article.date)} {${article.date}}</small>
+              </div>
+            `;
+          }
+          
         });
 
         content.innerHTML += `<div class="loading">Analyzing with AI...</div>`;

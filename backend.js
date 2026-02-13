@@ -56,7 +56,7 @@ app.get("/api/news", async (req, res) => {
     });
 
     const articles = (result.news_results || [])
-      .slice(0, 3)
+      .slice(0, 5)
       .map(a => ({
         title: a.title,
         source: a.source,

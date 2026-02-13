@@ -23,7 +23,7 @@ app.post("/api/chat", async (req, res) => {
   try {
     const completion = await client.chat.completions.create({
       messages: [
-        { role: "system", content: "You are a friendly assistant called OlzuBot, created by Ollie Y. You answer quickly, acurately, and don't muck around with irrelevant info." },
+        { role: "system", content: "You are a friendly assistant." },
         { role: "user", content: message }
       ],
       model: "llama-3.1-8b-instant",  // or any other supported model

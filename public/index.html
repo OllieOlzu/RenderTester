@@ -150,8 +150,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message:
-              `Based on the following stock news headlines, summerise whether the sentiment is Bullish, Bearish, or Mixed.
-               Then briefly explain why in 2–3 sentences.\n\n${articleText}`
+              `Summarise the stock information here to 2-3 sentances and tell me if the stock is looking bearish or bullish..\n\n${articleText}`
           })
         });
 

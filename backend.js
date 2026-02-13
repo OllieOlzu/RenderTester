@@ -23,7 +23,7 @@ app.post("/api/chat", async (req, res) => {
   try {
     const completion = await client.chat.completions.create({
       messages: [
-        { role: "system", content: "You are a stock headline summarising asistant. Summarise the news headlines given in 2-3 sentances." },
+        { role: "system", content: "You are a stock headline summarising asistant. Summarise the news headlines given in 2-3 sentances. Dive right into the responce, don't say what your going to do." },
         { role: "user", content: message }
       ],
       model: "llama-3.1-8b-instant",  // or any other supported model

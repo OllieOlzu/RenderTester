@@ -148,7 +148,7 @@
 
         content.innerHTML += `<div class="loading">Analyzing with AI...</div>`;
 
-        const aiRes = await fetch("/api/chat", {
+        const aiRes = await fetch("/api/newssummary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

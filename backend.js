@@ -16,7 +16,7 @@ const client = new Groq({
 });
 
 
-app.post("/api/chat", async (req, res) => {
+app.post("/api/newssummary", async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ reply: "No message provided" });
 

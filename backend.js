@@ -3,6 +3,7 @@ import cors from "cors";
 import { getJson } from "serpapi";
 import "dotenv/config";
 import Groq from "groq-sdk";
+import axios from "axios";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,6 +16,39 @@ const client = new Groq({
   apiKey: process.env.GROQ_API_KEY
 });
 
+app.get("/api/stooq", async (req, res) => {
+    try {
+        let stock = req.query.stock;
+
+        if (!stock) {
+            return res.status(400).json({ error: "Stock symbol required" });
+        }
+
+        stock = stock.toLowerCase() + ".us";
+
+        const url = `https://stooq.com/q/d/l/?s=${stock}&i=d`;
+
+        const response = await axios.get(url);
+
+        const csv = response.data;
+
+        const lines = csv.trim().split("\n");
+        const headers = lines[0].split(",");
+
+        const data = lines.slice(1).map(line => {
+            const values = line.split(",");
+            return {
+                date: values[0],
+                close: parseFloat(values[4])
+            };
+        });
+
+        res.json(data);
+
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch stock data" });
+    }
+});
 
 app.post("/api/newssummary", async (req, res) => {
   const { message } = req.body;

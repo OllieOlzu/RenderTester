@@ -2,176 +2,165 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Stock News Sentiment</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <title>Stock AI Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
-      max-width: 800px;
-      margin: auto;
-      padding: 30px;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
     }
 
     h1 {
-      text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
     }
 
-    input, button {
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: none;
-    }
-
-    input {
-      width: 60%;
+    .stocks {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
     }
 
     button {
-      background: #38bdf8;
+      padding: 12px 20px;
+      background: #1e1e1e;
+      border: 1px solid #444;
+      color: white;
       cursor: pointer;
-      margin-left: 8px;
+      border-radius: 6px;
+      transition: 0.2s;
     }
 
     button:hover {
-      background: #0ea5e9;
+      background: #333;
     }
 
-    .article {
-      background: #020617;
+    #summary {
+      max-width: 800px;
+      margin: 20px auto;
       padding: 15px;
+      background: #1a1a1a;
       border-radius: 8px;
-      margin-top: 15px;
     }
 
-    .article a {
-      color: #38bdf8;
-      font-size: 18px;
+    #news {
+      max-width: 800px;
+      margin: 20px auto;
+      text-align: left;
+    }
+
+    #news a {
+      color: #4da6ff;
       text-decoration: none;
     }
 
-    .article small {
-      color: #9ca3af;
-      display: block;
-      margin-top: 4px;
+    #news a:hover {
+      text-decoration: underline;
     }
 
-    .summary {
-      background: #020617;
-      border-left: 4px solid #38bdf8;
-      padding: 15px;
-      margin-top: 25px;
-      border-radius: 6px;
-      white-space: pre-wrap;
-    }
-
-    .loading {
-      margin-top: 20px;
-      color: #9ca3af;
+    canvas {
+      max-width: 900px;
+      margin: 40px auto;
     }
   </style>
 </head>
 <body>
 
-  <h1>Stock News</h1>
+  <h1>📈 Stock AI Dashboard</h1>
 
-  <div style="text-align:center;">
-    <input id="stockInput" placeholder="Enter stock (e.g. AAPL)" />
-    <button onclick="fetchNews()">Analyze</button>
+  <div class="stocks">
+    <button onclick="loadStock('AAPL')">Apple</button>
+    <button onclick="loadStock('MSFT')">Microsoft</button>
+    <button onclick="loadStock('GOOG')">Google</button>
+    <button onclick="loadStock('AMZN')">Amazon</button>
+    <button onclick="loadStock('TSLA')">Tesla</button>
   </div>
 
-  <div id="content"></div>
+  <div id="summary"></div>
 
-  <script>
-    function timeAgo(dateStr) {
-      const date = new Date(dateStr);
-      const seconds = Math.floor((Date.now() - date) / 1000);
+  <div id="news"></div>
 
-      const units = [
-        [60, "seconds"],
-        [60, "minutes"],
-        [24, "hours"],
-        [7, "days"],
-        [4.345, "weeks"],
-        [12, "months"],
-        [Infinity, "years"]
-      ];
+  <canvas id="chart"></canvas>
 
-      let value = seconds;
-      for (const [limit, name] of units) {
-        if (value < limit) {
-          return `${Math.floor(value)} ${name} ago`;
+<script>
+let chart;
+
+async function loadStock(symbol) {
+  document.getElementById("summary").innerHTML = "Loading summary...";
+  document.getElementById("news").innerHTML = "";
+  
+  // Fetch news
+  const newsRes = await fetch(`/api/news?stock=${symbol}`);
+  const newsData = await newsRes.json();
+
+  const headlines = newsData.results.map(a => a.title).join("\n");
+
+  // Display news
+  document.getElementById("news").innerHTML =
+    "<h2>Latest Headlines</h2>" +
+    newsData.results.map(a =>
+      `<p><a href="${a.link}" target="_blank">${a.title}</a><br><small>${a.source} - ${a.date}</small></p>`
+    ).join("");
+
+  // Send headlines to Groq for summary
+  const summaryRes = await fetch("/api/newssummary", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: headlines })
+  });
+
+  const summaryData = await summaryRes.json();
+
+  document.getElementById("summary").innerHTML =
+    `<h2>AI Summary</h2><p>${summaryData.reply}</p>`;
+
+  // Fetch stock price data
+  const stockRes = await fetch(`/api/stooq?stock=${symbol}`);
+  const stockData = await stockRes.json();
+
+  const labels = stockData.map(d => d.date);
+  const prices = stockData.map(d => d.close);
+
+  if (chart) chart.destroy();
+
+  const ctx = document.getElementById("chart").getContext("2d");
+
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: `${symbol} Closing Price`,
+        data: prices,
+        borderColor: "#4da6ff",
+        backgroundColor: "rgba(77,166,255,0.1)",
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          ticks: { color: "white" }
+        },
+        y: {
+          ticks: { color: "white" }
         }
-        value /= limit;
+      },
+      plugins: {
+        legend: {
+          labels: { color: "white" }
+        }
       }
     }
-
-    async function fetchNews() {
-      const stock = document.getElementById("stockInput").value.trim().toUpperCase();
-      const content = document.getElementById("content");
-      content.innerHTML = "";
-
-      if (!stock) return;
-
-      content.innerHTML = `<div class="loading">Fetching news...</div>`;
-
-      try {
-        const res = await fetch(`/api/news?stock=${stock}`);
-        const data = await res.json();
-
-        if (!data.results || data.results.length === 0) {
-          content.innerHTML = "No news found.";
-          return;
-        }
-
-        content.innerHTML = "";
-
-        let articleText = "";
-
-        data.results.forEach(article => {
-          if (article.date != undefined) {
-              articleText += `Title: ${article.title}\nSource: ${article.source}\n\n`;
-
-              content.innerHTML += `
-              <div class="article">
-                <a href="${article.link}" target="_blank">${article.title}</a>
-                <small>${timeAgo(article.date)}</small>
-              </div>
-            `;
-          }
-          
-        });
-
-        content.innerHTML += `<div class="loading">Analyzing with AI...</div>`;
-
-        const aiRes = await fetch("/api/newssummary", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message:
-              `${articleText}`
-          })
-        });
-
-        const aiData = await aiRes.json();
-
-        content.innerHTML += `
-          <div class="summary">
-            <strong>AI Sentiment Analysis:</strong><br><br>
-            ${aiData.reply.trim()}
-          </div>
-        `;
-
-      } catch (err) {
-        content.innerHTML = "Error loading data.";
-        console.error(err);
-      }
-    }
-  </script>
+  });
+}
+</script>
 
 </body>
 </html>
